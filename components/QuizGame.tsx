@@ -13,6 +13,12 @@ import {
   JLPT_MENU_SETS,
   QUIZ_SETS,
 } from "@/data/quizSets/index";
+import { LeaderboardPanel } from "@/components/LeaderboardPanel";
+import {
+  getStoredNickname,
+  saveStoredNickname,
+  submitLeaderboardScore,
+} from "@/lib/leaderboard";
 import {
   getStoredHighScore,
   saveHighScore,
@@ -23,7 +29,7 @@ import type { GameStatus, QuizItem, QuizSet, Question } from "@/types/quiz";
 
 const GAME_SECONDS = 30;
 const POINTS_PER_CORRECT_ANSWER = 10;
-const POINTS_PER_WRONG_ANSWER = 10;
+const POINTS_PER_WRONG_ANSWER = 20;
 const BASIC_ACTION_RANGE_OPTIONS = [
   { id: "verbs-basic-actions", label: "讀音練習" },
   { id: "verbs-basic-actions-collocations", label: "名詞搭配" },
@@ -115,6 +121,11 @@ export function QuizGame() {
   const [feedback, setFeedback] = useState(() =>
     getDefaultFeedback(QUIZ_SETS[0]),
   );
+  const [nickname, setNickname] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
+  const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
 
   const isPlaying = gameStatus === "playing";
   const isGameOver = gameStatus === "ended";
@@ -152,6 +163,9 @@ export function QuizGame() {
         if (currentTime <= 1) {
           setGameStatus("ended");
           setFeedback("時間到！看看這次有沒有刷新最高分。");
+          setNickname((currentNickname) => currentNickname || getStoredNickname());
+          setSubmitMessage("");
+          setHasSubmittedScore(false);
           return 0;
         }
 
@@ -161,6 +175,42 @@ export function QuizGame() {
 
     return () => window.clearInterval(timer);
   }, [isPlaying]);
+
+  async function submitScoreToLeaderboard() {
+    const trimmedNickname = nickname.trim();
+
+    if (!trimmedNickname) {
+      setSubmitMessage("請先輸入暱稱。");
+      return;
+    }
+
+    if (score <= 0) {
+      setSubmitMessage("本次分數為 0，暫不上傳。");
+      return;
+    }
+
+    setIsSubmittingScore(true);
+    setSubmitMessage("");
+
+    try {
+      await submitLeaderboardScore({
+        nickname: trimmedNickname,
+        score,
+        quizSetId: selectedQuizSetId,
+        quizSetLabel: selectedQuizSet.label,
+      });
+      saveStoredNickname(trimmedNickname);
+      setHasSubmittedScore(true);
+      setSubmitMessage("已上傳到排行榜！");
+      setLeaderboardRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      setSubmitMessage(
+        error instanceof Error ? error.message : "上傳失敗，請稍後再試。",
+      );
+    } finally {
+      setIsSubmittingScore(false);
+    }
+  }
 
   function answerQuestion(option: QuizItem) {
     if (!isPlaying) {
@@ -205,6 +255,8 @@ export function QuizGame() {
     setCorrectCount(0);
     setWrongCount(0);
     setWrongAnswers([]);
+    setSubmitMessage("");
+    setHasSubmittedScore(false);
     setTimeLeft(GAME_SECONDS);
     setGameStatus("playing");
     setFeedback(getDefaultFeedback(selectedQuizSet));
@@ -454,6 +506,11 @@ export function QuizGame() {
                   ))}
                 </div>
               </div>
+
+              <LeaderboardPanel
+                quizSetId={selectedQuizSetId}
+                refreshToken={leaderboardRefreshKey}
+              />
             </div>
           </div>
         ) : (
@@ -574,6 +631,49 @@ export function QuizGame() {
                         再玩一次
                       </button>
                     </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl bg-white p-4 text-left">
+                    <p className="font-bold text-stone-900">上傳排行榜</p>
+                    <p className="mt-1 text-sm text-stone-500">
+                      輸入暱稱後，可把這次分數記到全站排行榜。
+                    </p>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                      <input
+                        type="text"
+                        value={nickname}
+                        maxLength={12}
+                        disabled={isSubmittingScore || hasSubmittedScore}
+                        onChange={(event) => setNickname(event.target.value)}
+                        placeholder="輸入暱稱（最多 12 字）"
+                        className="w-full rounded-2xl border border-stone-200 px-4 py-3 font-bold text-stone-900 outline-none transition focus:border-rose-300 focus:ring-4 focus:ring-rose-100 disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void submitScoreToLeaderboard()}
+                        disabled={isSubmittingScore || hasSubmittedScore}
+                        className="rounded-2xl bg-rose-400 px-5 py-3 font-bold text-stone-950 transition hover:bg-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {hasSubmittedScore
+                          ? "已上傳"
+                          : isSubmittingScore
+                            ? "上傳中..."
+                            : "上傳分數"}
+                      </button>
+                    </div>
+                    {submitMessage && (
+                      <p className="mt-3 text-sm font-bold text-stone-600">
+                        {submitMessage}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-5">
+                    <LeaderboardPanel
+                      quizSetId={selectedQuizSetId}
+                      refreshToken={leaderboardRefreshKey}
+                      compact
+                    />
                   </div>
 
                   {wrongAnswers.length > 0 && (
