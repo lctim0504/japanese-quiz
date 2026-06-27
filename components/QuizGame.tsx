@@ -261,7 +261,7 @@ export function QuizGame() {
         </div>
 
         {gameStatus === "ready" ? (
-          <div className="grid items-stretch gap-6 rounded-4xl border border-stone-200 bg-white/90 p-5 shadow-2xl shadow-stone-300/40 backdrop-blur sm:p-6 lg:grid-cols-[18rem_1fr]">
+          <div className="grid items-start gap-6 rounded-4xl border border-stone-200 bg-white/90 p-5 shadow-2xl shadow-stone-300/40 backdrop-blur sm:p-6 lg:grid-cols-[18rem_1fr]">
             <aside className="flex h-full flex-col rounded-3xl bg-stone-950 p-4 text-white sm:p-5 lg:sticky lg:top-6 lg:min-h-[calc(100vh-12rem)]">
               <p className="px-3 text-sm font-bold text-rose-300">
                 題目範圍 Menu
@@ -319,42 +319,44 @@ export function QuizGame() {
               </div>
             </aside>
 
-            <div className="grid gap-6">
-              <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-                <div className="rounded-3xl bg-stone-950 p-8 text-white">
+            <div className="flex w-full flex-col gap-4">
+              <div className="grid gap-4 lg:grid-cols-[1fr_0.75fr] lg:items-start">
+                <div className="rounded-3xl bg-stone-950 p-6 text-white sm:p-8">
                   <p className="text-sm font-bold text-rose-300">準備開始</p>
-                  <h2 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">
+                  <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
                     挑戰 30 秒，
                     <br />
                     記熟日文常用讀音。
                   </h2>
-                  <p className="mt-5 max-w-xl text-lg leading-8 text-stone-300">
+                  <p className="mt-4 max-w-xl text-base leading-7 text-stone-300 sm:text-lg sm:leading-8">
                     每題會顯示一個日文漢字，例如「二日」。請從四個假名選項中選出正確讀音，
                     答對一題加 10 分。
                   </p>
                   <button
                     type="button"
                     onClick={startGame}
-                    className="mt-8 rounded-full bg-rose-400 px-8 py-4 text-lg font-black text-stone-950 transition hover:bg-rose-300"
+                    className="mt-6 rounded-full bg-rose-400 px-8 py-3 text-lg font-black text-stone-950 transition hover:bg-rose-300"
                   >
                     開始測驗
                   </button>
                 </div>
 
                 <div className="grid gap-3">
-                  <div className="rounded-3xl bg-rose-50 p-6">
-                    <p className="text-sm font-bold text-rose-500">測驗時間</p>
-                    <p className="mt-2 text-4xl font-black">00:30</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-3xl bg-rose-50 p-4">
+                      <p className="text-sm font-bold text-rose-500">測驗時間</p>
+                      <p className="mt-1 text-3xl font-black">00:30</p>
+                    </div>
+                    <div className="rounded-3xl bg-amber-50 p-4">
+                      <p className="text-sm font-bold text-amber-600">最高分</p>
+                      <p className="mt-1 text-3xl font-black">{highScore}</p>
+                    </div>
                   </div>
-                  <div className="rounded-3xl bg-amber-50 p-6">
-                    <p className="text-sm font-bold text-amber-600">最高分</p>
-                    <p className="mt-2 text-4xl font-black">{highScore}</p>
-                  </div>
-                  <div className="rounded-3xl bg-stone-100 p-6">
+                  <div className="rounded-3xl bg-stone-100 p-4">
                     <p className="text-sm font-bold text-stone-600">
                       目前範圍
                     </p>
-                    <p className="mt-2 text-2xl font-black">
+                    <p className="mt-1 text-xl font-black sm:text-2xl">
                       {selectedQuizSet.label}
                     </p>
                     {canSwitchBasicActionRange && (
@@ -396,7 +398,7 @@ export function QuizGame() {
                 </div>
 
                 <div
-                  className={`mt-5 grid gap-3 ${
+                  className={`mt-4 grid gap-3 ${
                     selectedQuizSet.categoryGroup === "counter"
                       ? "grid-cols-1"
                       : "sm:grid-cols-2 lg:grid-cols-3"
